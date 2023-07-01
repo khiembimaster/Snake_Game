@@ -13,8 +13,13 @@ using namespace std;
 #define MAX_SIZE_FOOD 4
 #define MAX_SPEED 3
 //Global variables
-POINT snake[10]; //snake
-POINT food[4]; // food
+const char GATE_PATTERN = '#';
+const char FOOD_PATTERN = 'O';
+char BODY_PATTERN[] = "2112731721127284";
+POINT snake[10];// snake
+POINT food[4];  // food
+POINT gate;     // gate
+POINT spawn;    // spwan location
 int CHAR_LOCK;//used to determine the direction my snake cannot move (At a moment, there is one direction my snake cannot move to)
 int MOVING;//used to determine the direction my snake moves (At a moment, there are three directions my snake can move)
 int SPEED;// Standing for level, the higher the level, the quicker the speed
@@ -26,6 +31,53 @@ int EXIT_GAME = 0;
 
 POINT CURSOR;
 
+//Draw=======================================================================================//
+void EraseSnakeAndFood() {
+    WindowsManager::GoTo(food[FOOD_INDEX].x, food[FOOD_INDEX].y);
+    cout << ' ';
+    for (int i = 0; i < SIZE_SNAKE; i++) {
+        WindowsManager::GoTo(snake[i].x, snake[i].y);
+        cout << ' ';
+    }
+}
+
+void DrawSnakeAndFood() {
+    WindowsManager::GoTo(food[FOOD_INDEX].x, food[FOOD_INDEX].y);
+    cout << FOOD_PATTERN;
+    int LENGTH_OF_BODY_PATTERN = sizeof(BODY_PATTERN);
+    for (int i = 0; i < SIZE_SNAKE; i++) {
+        WindowsManager::GoTo(snake[i].x, snake[i].y);
+        cout << BODY_PATTERN[i % LENGTH_OF_BODY_PATTERN];
+    }
+}
+
+void DrawGate() {
+    WindowsManager::GoTo(gate.x, gate.y);
+    cout << GATE_PATTERN;
+}
+
+void EraseGate() {
+    WindowsManager::GoTo(gate.x, gate.y);
+    cout << ' ';
+}
+
+void DrawBoard(int x, int y, int width, int height, int curPosX = 0, int curPosY = 0) {
+    WindowsManager::SetColor(1, 1);
+    WindowsManager::GoTo(x, y); cout << ' ';
+    for (int i = 1; i < width; i++)cout << ' ';
+    cout << ' ';
+    WindowsManager::GoTo(x, height + y); cout << ' ';
+    for (int i = 1; i < width; i++)cout << ' ';
+    cout << ' ';
+    for (int i = y + 1; i < height + y; i++) {
+        WindowsManager::GoTo(x, i); cout << ' ';
+        WindowsManager::GoTo(x + width, i); cout << ' ';
+    }
+    WindowsManager::SetColor(15, 0);
+    WindowsManager::GoTo(curPosX, curPosY);
+
+}
+
 void FixConsoleWindow() {
     SetConsoleOutputCP(65001);
     WindowsManager::SetWindowSize(100, 30);
@@ -35,13 +87,6 @@ void FixConsoleWindow() {
     WindowsManager::ShowCur(0);
     WindowsManager::DisableCtrButton(1, 1, 1);
     WindowsManager::DisableSelection();
-}
-
-void GotoXY(int x, int y) {
-    COORD coord;
-    coord.X = x;
-    coord.Y = y;
-    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
 }
 
 bool IsValid(int x, int y) {
@@ -64,6 +109,23 @@ void GenerateFood() {
     }
 }
 
+void GenerateGateAndSpawn(){
+    int x, y;
+    srand(time(NULL));
+    do {
+        x = rand() % (WIDTH_CONSOLE - 1) + 1;
+        y = rand() % (HEIGH_CONSOLE - 1) + 1;
+    } while (IsValid(x, y) == false);
+    gate = { x,y };
+
+    do {
+        x = rand() % (WIDTH_CONSOLE - 1) + 1;
+        y = rand() % (HEIGH_CONSOLE - 1) + 1;
+    } while (IsValid(x, y) == false);
+    spawn = { x,y };
+
+}
+
 void ResetData() {
     //Initialize the global values
     CHAR_LOCK = 'A', MOVING = 'D', SPEED = 2; FOOD_INDEX = 0, WIDTH_CONSOLE = 70, HEIGH_CONSOLE = 20, SIZE_SNAKE = 6;
@@ -73,26 +135,6 @@ void ResetData() {
     snake[4] = { 14, 5 }; snake[5] = { 15, 5 };
     GenerateFood();//Create food array
 }
-
-
-
-void DrawBoard(int x, int y, int width, int height, int curPosX = 0, int curPosY = 0) {
-    WindowsManager::SetColor(1, 1);
-    GotoXY(x, y); cout << ' ';
-    for (int i = 1; i < width; i++)cout << ' ';
-    cout << ' ';
-    GotoXY(x, height + y); cout << ' ';
-    for (int i = 1; i < width; i++)cout << ' ';
-    cout << ' ';
-    for (int i = y + 1; i < height + y; i++) {
-        GotoXY(x, i); cout << ' ';
-        GotoXY(x + width, i); cout << ' ';
-    }
-    WindowsManager::SetColor(15, 0);
-    GotoXY(curPosX, curPosY);
-
-}
-
 
 void StartGame() {
     system("cls");
@@ -118,13 +160,8 @@ void Eat() {
     snake[SIZE_SNAKE] = food[FOOD_INDEX];
     if (FOOD_INDEX == MAX_SIZE_FOOD - 1)
     {
-        FOOD_INDEX = 0;
-        if (SPEED == MAX_SPEED) {
-            SPEED = 1;
-            SIZE_SNAKE = 6;
-        }
-        else SPEED++;
-        GenerateFood();        
+        GenerateGateAndSpawn();
+        DrawGate();
     }
     else {
         FOOD_INDEX++;
@@ -135,20 +172,11 @@ void Eat() {
 //Function to process the dead of snake
 void ProcessDead() {
     STATE = 0;
-    GotoXY(0, HEIGH_CONSOLE + 2);
-    printf("Dead, type y to continue or anykey to exit");
+    WindowsManager::GoTo(0, HEIGH_CONSOLE + 2);
+    cout << "Dead, type y to continue or anykey to exit";
 }
 
-//Function to draw
-void DrawSnakeAndFood(const char* str) {
-    GotoXY(food[FOOD_INDEX].x, food[FOOD_INDEX].y);
-    printf(str);
-    for (int i = 0; i < SIZE_SNAKE; i++) {
-        GotoXY(snake[i].x, snake[i].y);
-        printf(str);
-    }
-}
-
+// Movements==================================================================================//
 void MoveRight() {
     if (snake[SIZE_SNAKE - 1].x + 1 == WIDTH_CONSOLE) {
         ProcessDead();
@@ -186,22 +214,6 @@ void MoveDown() {
         snake[SIZE_SNAKE - 1].y++;
     }
 }
-void Collisions() {
-    if (snake[SIZE_SNAKE - 1].x == food[FOOD_INDEX].x && snake[SIZE_SNAKE - 1].y == food[FOOD_INDEX].y) {
-        Eat();
-        return;
-    }
-
-    for (int i = 0; i < SIZE_SNAKE - 1; ++i) {
-        if (snake[SIZE_SNAKE - 1].x == snake[i].x && snake[SIZE_SNAKE - 1].y == snake[i].y) {
-            GotoXY(0, HEIGH_CONSOLE + 1);
-            cout << "You have touched your self!";
-            ProcessDead();
-            return;
-        }
-    }
-
-}
 
 void MoveUp() {
     if (snake[SIZE_SNAKE - 1].y - 1 == 0) {
@@ -216,11 +228,45 @@ void MoveUp() {
     }
 }
 
+void Collisions() {
+    if (snake[SIZE_SNAKE - 1].x == food[FOOD_INDEX].x && snake[SIZE_SNAKE - 1].y == food[FOOD_INDEX].y) {
+        Eat();
+        return;
+    }
+    if (snake[SIZE_SNAKE - 1].x == gate.x && snake[SIZE_SNAKE - 1].y == gate.y) {
+        snake[SIZE_SNAKE - 1] = spawn;
+        return;
+    }
+
+    if (snake[0].x == spawn.x && snake[0].y == spawn.y) {
+        FOOD_INDEX = 0;
+        if (SPEED == MAX_SPEED) {
+            SPEED = 1;
+            SIZE_SNAKE = 6;
+        }
+        else SPEED++;
+        GenerateFood();
+        EraseGate();
+        return;
+    }
+    
+
+    for (int i = 0; i < SIZE_SNAKE - 1; ++i) {
+        if (snake[SIZE_SNAKE - 1].x == snake[i].x && snake[SIZE_SNAKE - 1].y == snake[i].y) {
+            WindowsManager::GoTo(0, HEIGH_CONSOLE + 1);
+            cout << "You have touched your self!";
+            ProcessDead();
+            return;
+        }
+    }
+
+}
+
 //Subfunction for thread
 void ThreadFunc() {
     while (!EXIT_GAME) {
         if (STATE == 1) {//If my snake is alive
-            DrawSnakeAndFood(" ");
+            EraseSnakeAndFood();
             switch (MOVING) {
             case 'A':
                 MoveLeft();
@@ -236,7 +282,7 @@ void ThreadFunc() {
                 break;
             }
             Collisions();
-            DrawSnakeAndFood("O");
+            DrawSnakeAndFood();
             Sleep(1000 / SPEED);//Sleep function with SPEEED variable
         }
     }
@@ -244,7 +290,7 @@ void ThreadFunc() {
 }
 
 void Save() {
-    //GotoXY(0, HEIGH_CONSOLE + 2);
+    //WindowsManager::GoTo(0, HEIGH_CONSOLE + 2);
     ofstream save_file("save.txt");
 
     for (int i = 0; i < SIZE_SNAKE; ++i)
@@ -267,9 +313,9 @@ void Save() {
 }
 
 void Load() {
-    //GotoXY(0, HEIGH_CONSOLE + 2);
+    //WindowsManager::GoTo(0, HEIGH_CONSOLE + 2);
 
-    DrawSnakeAndFood(" ");
+    EraseSnakeAndFood();
     ifstream load_file("save.txt");
     for (int i = 0; i < SIZE_SNAKE; ++i)
     {
@@ -344,11 +390,10 @@ void RunGame() {
     }
 }
 
-
 void DisplayOptions(vector<string>options, int x, int y, int new_opt, int bg_color, int text_color) {
     
     for (int i = 0; i < options.size(); ++i) {
-        GotoXY(x, y + i);
+        WindowsManager::GoTo(x, y + i);
         if (new_opt == i) {
             WindowsManager::SetColor(bg_color, text_color);
             cout << ">>" << options[i] << "<<";
@@ -422,7 +467,7 @@ void MainMenu() {
 }
 
 void Intro() {
-    ifstream Title("Title.txt");;
+    ifstream Title("Title.txt");
     stringstream title_buff;
     title_buff << Title.rdbuf();
     Title.close();
@@ -446,9 +491,10 @@ void Intro() {
 }
 
 // main function
-void main() {
+int main() {
     
     FixConsoleWindow();
     Intro();
     MainMenu();
+    return (0);
 }
