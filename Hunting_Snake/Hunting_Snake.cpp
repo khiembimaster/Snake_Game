@@ -124,18 +124,25 @@ void EeaseProcessbar(int x, int y) {
     }
 }
 
-void DrawBoard(int x, int y, int width, int height, int curPosX = 0, int curPosY = 0) {
-    WindowsManager::SetColor(1, 1);
+void DrawBoard(int x, int y, int width, int height, int speed = 0, int color = 1, int curPosX = 0, int curPosY = 0) {
+    WindowsManager::SetColor(color, color);
     WindowsManager::GoTo(x, y); cout << ' ';
 
-    for (int i = 1; i < width; i++)cout << ' ';
+    for (int i = 1; i < width; i++) {
+        cout << ' ';
+        Sleep(speed);
+    }
     cout << ' ';
     WindowsManager::GoTo(x, height + y); cout << ' ';
-    for (int i = 1; i < width; i++)cout << ' ';
+    for (int i = 1; i < width; i++) {
+        cout << ' ';
+        Sleep(speed);
+    }
     cout << ' ';
     for (int i = y + 1; i < height + y; i++) {
         WindowsManager::GoTo(x, i); cout << ' ';
         WindowsManager::GoTo(x + width, i); cout << ' ';
+        Sleep(speed);
     }
 
     WindowsManager::SetColor(15, 13);
@@ -256,7 +263,12 @@ void ResetData() {
 void StartGame() {
     system("cls");
     // Intialize original data
-    DrawBoard(0, 0, WIDTH_CONSOLE, HEIGH_CONSOLE); // Draw game
+    DrawBoard(0, 0, WIDTH_CONSOLE, HEIGH_CONSOLE,20); // Draw game
+    for (int i = 2; i < 4; ++i) {
+        DrawBoard(0, 0, WIDTH_CONSOLE, HEIGH_CONSOLE, 1, i); // Draw game
+    }
+    DrawBoard(0, 0, WIDTH_CONSOLE, HEIGH_CONSOLE, 5); // Draw game
+    
     STATE = 1;//Start running Thread
 }
 //Function exit game
@@ -286,6 +298,9 @@ void Eat() {
 }
 //Function to process the dead of snake
 void ProcessDead() {
+    for (int i = 2; i < 5; ++i) {
+        DrawBoard(0, 0, WIDTH_CONSOLE, HEIGH_CONSOLE, 1, i); // Draw game
+    }
     STATE = 0;
     check_eat_done = false;
     WindowsManager::GoTo(0, HEIGH_CONSOLE + 2);
@@ -353,7 +368,6 @@ void Collisions() {
     if (snake[SIZE_SNAKE - 1].x == gate.x && snake[SIZE_SNAKE - 1].y == gate.y) {
         snake[SIZE_SNAKE - 1] = spawn;
         return;
-
     }
 
 
@@ -511,7 +525,9 @@ void Load(string path) {
     }
     load_file.close();
     system("cls");
+    
     DrawBoard(0, 0, WIDTH_CONSOLE, HEIGH_CONSOLE); // Draw game
+    
     DrawSnakeAndFood();
     DrawGate();
     DrawSpawn();
@@ -637,7 +653,7 @@ void ChooseFileToLoad() {
         case 13:
             ResetData();
             Load(listFileName[choice]);
-            StartGame();
+            //StartGame();
             RunGame();
             return;
             break;
