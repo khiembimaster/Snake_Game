@@ -158,10 +158,13 @@ void ClearMessage(int x, int y, int n) {
 }
 void DrawBoard(int x, int y, int width, int height, int speed = 0, int color = 3, int curPosX = 0, int curPosY = 0) {
     // Status
-    DrawRect(width+2, 0, 31, 20, 1, 6, 4);
-
+    DrawRect(width + 2, 0, 31, 8, 1, 5, 10);
+    // Logs
+    DrawRect(width + 2, 8, 31, 4, 1, 5, 10);
+    // KEY
+    DrawRect(width + 2, 12, 31, 8, 1, 5, 10);
     // Process bar
-    DrawRect(0, height + 2, 14 * 5, 6, 1, 5, 4);
+    DrawRect(0, height + 2, 14 * 5, 6, 1, 5, 10);
     // Main board
     WindowsManager::SetColor(color, color+2);
     WindowsManager::GoTo(x, y); wcout << L'▓';
@@ -185,7 +188,11 @@ void DrawBoard(int x, int y, int width, int height, int speed = 0, int color = 3
     WindowsManager::SetColor(15, 0);
     WindowsManager::GoTo(curPosX, curPosY);
 
+    DrawMessage(STR_GROUP, WIDTH_CONSOLE + 5, HEIGH_CONSOLE + 2, 5, 15, 6);
+
+
     DrawPlayingProcess(2, HEIGH_CONSOLE+2, 5, 10);
+
 }
 
 void FixConsoleWindow() {
@@ -328,19 +335,21 @@ void Eat() {
 }
 //Function to process the dead of snake
 void ProcessDead() {
+    STATE = 0;
+    check_eat_done = false;
     ClearMessage(WIDTH_CONSOLE + 5, 2, 5);
     DrawMessage(STR_DEAD, WIDTH_CONSOLE + 5, 2, 5, 15, 12);
     for (int i = 1; i < 5; ++i) {
         DrawBoard(0, 0, WIDTH_CONSOLE, HEIGH_CONSOLE, 0, i); // Draw game
         Sleep(50);
     }
-    STATE = 0;
-    check_eat_done = false;
 }
 
 // Movements==================================================================================//
 void MoveRight() {
     if (snake[SIZE_SNAKE - 1].x + 1 == WIDTH_CONSOLE) {
+        WindowsManager::GoTo(WIDTH_CONSOLE + 5, HEIGH_CONSOLE / 2);
+        cout << "You have touched east-wall!";
         ProcessDead();
     }
     else {
@@ -353,6 +362,8 @@ void MoveRight() {
 }
 void MoveLeft() {
     if (snake[SIZE_SNAKE - 1].x - 1 == 0) {
+        WindowsManager::GoTo(WIDTH_CONSOLE + 5, HEIGH_CONSOLE / 2);
+        cout << "You have touched west-wall!";
         ProcessDead();
     }
     else {
@@ -366,6 +377,8 @@ void MoveLeft() {
 }
 void MoveDown() {
     if (snake[SIZE_SNAKE - 1].y + 1 == HEIGH_CONSOLE) {
+        WindowsManager::GoTo(WIDTH_CONSOLE + 5, HEIGH_CONSOLE / 2);
+        cout << "You have touched south-wall!";
         ProcessDead();
     }
     else {
@@ -378,7 +391,10 @@ void MoveDown() {
 }
 void MoveUp() {
     if (snake[SIZE_SNAKE - 1].y - 1 == 0) {
+        WindowsManager::GoTo(WIDTH_CONSOLE + 5, HEIGH_CONSOLE / 2);
+        cout << "You have touched north-wall";
         ProcessDead();
+
     }
     else {
         for (int i = 0; i < SIZE_SNAKE - 1; i++) {
@@ -434,7 +450,6 @@ void Collisions() {
             return;
         }
     }
-
 }
 //Subfunction for thread
 void ThreadFunc() {
@@ -471,7 +486,6 @@ bool checkNotInNameFile(string fileName) {
     for (int i = 0; i < name.size(); i++) {
         if (fileName == name[i]) {
             return false;
-
         }
     }
     return true;
@@ -557,6 +571,8 @@ void Load(string path) {
     DrawSnakeAndFood();
     DrawGate();
     DrawSpawn();
+    ClearMessage(WIDTH_CONSOLE + 5, 2, 5);
+    DrawMessage(STR_PLAY, WIDTH_CONSOLE + 5, 2, 5, 15, 12);
     STATE = 1;//Start running Thread
 }
 
@@ -605,15 +621,39 @@ void RunGame() {
             else {
                 if (check_pause == true) {
                     ClearMessage(WIDTH_CONSOLE + 5, 2, 5);
+                    DrawMessage(STR_PLAY, WIDTH_CONSOLE + 5, 2, 5, 15, 12);
                     ResumeThread(handle_t1);
                     check_pause = false;
                 }
                 if ((temp != CHAR_LOCK) && (temp == 'D' || temp == 'A' || temp == 'W' || temp == 'S'))
                 {
-                    if (temp == 'D') CHAR_LOCK = 'A';
-                    else if (temp == 'W') CHAR_LOCK = 'S';
-                    else if (temp == 'S') CHAR_LOCK = 'W';
-                    else CHAR_LOCK = 'D';
+                    if (check_pause == false) {
+                        PauseGame(handle_t1);
+                    }
+                    if (temp == 'D') {
+                        CHAR_LOCK = 'A';
+                        ClearMessage(WIDTH_CONSOLE + 5, 14, 5);
+                        DrawMessage(STR_D, WIDTH_CONSOLE + 15, 14, 5, 15, 8);
+                    }
+                    else if (temp == 'W') {
+                        CHAR_LOCK = 'S';
+                        ClearMessage(WIDTH_CONSOLE + 5, 14, 5);
+                        DrawMessage(STR_W, WIDTH_CONSOLE + 15, 14, 5, 15, 8);
+                    }
+                    else if (temp == 'S') {
+                        CHAR_LOCK = 'W';
+                        ClearMessage(WIDTH_CONSOLE + 5, 14, 5);
+                        DrawMessage(STR_S, WIDTH_CONSOLE + 15, 14, 5, 15, 8);
+                    }
+                    else {
+                        CHAR_LOCK = 'D';
+                        ClearMessage(WIDTH_CONSOLE + 5, 14, 5);
+                        DrawMessage(STR_A, WIDTH_CONSOLE + 15, 14, 5, 15, 8);
+                    }
+                    if (check_pause == true) {
+                        ResumeThread(handle_t1);
+                        check_pause = false;
+                    }
                     MOVING = temp;
                 }
 
