@@ -456,6 +456,7 @@ void ThreadFunc() {
     while (!EXIT_GAME) {
         if (STATE == 1) {//If my snake is alive
             EraseSnakeAndFood();
+            Collisions();
             switch (MOVING) {
             case 'A':
                 MoveLeft();
@@ -470,7 +471,6 @@ void ThreadFunc() {
                 MoveDown();
                 break;
             }
-            Collisions();
             DrawSnakeAndFood();
             if (check_eat_done) {
                 DrawGate();
