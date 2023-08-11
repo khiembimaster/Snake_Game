@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <vector>
 #include <sstream>
+#include <streambuf>
 #include "WindowsManager.h"
 using namespace std;
 //Constants
@@ -87,81 +88,127 @@ void EraseSpawn() {
     cout << ' ';
 }
 
+void DrawStatus(const wchar_t* content[], int n, int x, int y, int bg, int text) {
+    WindowsManager::SetColor(bg, text);
+    for (int i = 0; i < n; i++) {
+        WindowsManager::GoTo(x, y+i);
+        wcout << content[i];
+    }
+    WindowsManager::SetColor(15, 0);
+}
 
 void DrawPlayingProcess(int x, int y, int bg, int text) {
     int n = FOOD_INDEX;
+    
     if (check_eat_done) {
         n++;
     }
+
+    //SetConsoleOutputCP(1251);
     for (int i = 0; i < n; i++) {
         WindowsManager::SetColor(bg + i, text + i);
         WindowsManager::GoTo(x, y + 1);
-        cout << "  ___  " << endl;
+        wcout << L"▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒";
         WindowsManager::GoTo(x, y + 2);
-        cout << " (o o) " << endl;
+        wcout << L"▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒";
         WindowsManager::GoTo(x, y + 3);
-        cout << "(  V  )" << endl;
+        wcout << L"▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒";
         WindowsManager::GoTo(x, y + 4);
-        cout << "--m-m--" << endl;
+        wcout << L"▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒";
+        WindowsManager::GoTo(x, y + 5);
+        wcout << L"▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒";
         WindowsManager::SetColor(15, 0);
-        y += 5;
+        x += 17;
     }
 }
 void EeaseProcessbar(int x, int y) {
+    WindowsManager::SetColor(15, 0);
     for (int i = 0; i < MAX_SIZE_FOOD; i++) {
-        WindowsManager::SetColor(15, 0);
         WindowsManager::GoTo(x, y + 1);
-        cout << "       " << endl;
+        cout << "                 ";
         WindowsManager::GoTo(x, y + 2);
-        cout << "       " << endl;
+        cout << "                 ";
         WindowsManager::GoTo(x, y + 3);
-        cout << "       " << endl;
+        cout << "                 ";
         WindowsManager::GoTo(x, y + 4);
-        cout << "       " << endl;
-        WindowsManager::SetColor(15, 0);
-        y += 5;
+        cout << "                 ";
+        WindowsManager::GoTo(x, y + 5);
+        cout << "                 ";
+        x += 17;
         Sleep(200);
     }
 }
 
-void DrawBoard(int x, int y, int width, int height, int speed = 0, int color = 1, int curPosX = 0, int curPosY = 0) {
-    WindowsManager::SetColor(color, color);
-    WindowsManager::GoTo(x, y); cout << ' ';
-
-    for (int i = 1; i < width; i++) {
-        cout << ' ';
+void DrawRect(int x, int y, int width, int height, int speed = 0, int bg = 5, int text = 4) {
+    WindowsManager::SetColor(bg, text);
+    WindowsManager::GoTo(x, y); wcout << L'▓';
+    wcout << setw(width) << setfill(L'▓') << L'▓';
+    WindowsManager::GoTo(x, y + height); wcout << L'▓';
+    wcout << setw(width) << setfill(L'▓') << L'▓';
+    for (int i = y; i <= y + height; i++) {
+        WindowsManager::GoTo(x, i); wcout << L"▓▓";
+        WindowsManager::GoTo(x + width, i); wcout << L"▓▓";
         Sleep(speed);
     }
-    cout << ' ';
-    WindowsManager::GoTo(x, height + y); cout << ' ';
-    for (int i = 1; i < width; i++) {
-        cout << ' ';
+    WindowsManager::SetColor(15, 0);
+}
+
+void DrawMessage(const wchar_t content[][30], int x, int y, int n, int bg = 5, int text = 4) {
+    WindowsManager::SetColor(bg, text);
+    
+    for (int i = 0; i < n; i++) {
+        WindowsManager::GoTo(x, y + i); 
+        wcout << content[i] << endl;
+    }
+    WindowsManager::SetColor(15, 0);
+}
+
+void ClearMessage(int x, int y, int n) {
+    WindowsManager::SetColor(15, 0);
+    
+    for (int i = 0; i < n; i++) {
+        WindowsManager::GoTo(x, y + i);
+        cout << setw(28) << setfill(' ') << ' ';
+    }
+}
+
+void DrawBoard(int x, int y, int width, int height, int speed = 0, int color = 3, int curPosX = 0, int curPosY = 0) {
+    // Status
+    DrawRect(width+2, 0, 31, 20, 1, 6, 4);
+
+    // Process bar
+    DrawRect(0, height + 2, 14 * 5, 6, 1, 5, 4);
+    // Main board
+    WindowsManager::SetColor(color, color+2);
+    WindowsManager::GoTo(x, y); wcout << L'▓';
+    
+    for (int i = 1; i <= width; i++) {
+        wcout << L'▓';
         Sleep(speed);
     }
-    cout << ' ';
-    for (int i = y + 1; i < height + y; i++) {
-        WindowsManager::GoTo(x, i); cout << ' ';
-        WindowsManager::GoTo(x + width, i); cout << ' ';
+    wcout << L'▓';
+    WindowsManager::GoTo(x, height + y); wcout << L' ';
+    for (int i = 1; i <= width; i++) {
+        wcout << L'▓';
         Sleep(speed);
     }
-
-    WindowsManager::SetColor(15, 13);
-    WindowsManager::GoTo(0, y + height+1); cout << ' ';
-    ifstream Title("Title.txt");
-    stringstream title_buff;
-    title_buff << Title.rdbuf();
-    Title.close();
-    cout << title_buff.str();
-
+    //wcout << L'▓';
+    for (int i = y + 1; i <= height + y; i++) {
+        WindowsManager::GoTo(x, i); wcout << L"▓";
+        WindowsManager::GoTo(x + width, i); wcout << L"▓▓";
+        Sleep(speed);
+    }
     WindowsManager::SetColor(15, 0);
     WindowsManager::GoTo(curPosX, curPosY);
 
-    DrawPlayingProcess(WIDTH_CONSOLE + 2, 0, 4, 10);
+    DrawPlayingProcess(2, HEIGH_CONSOLE+2, 5, 10);
 }
+
 void FixConsoleWindow() {
     SetConsoleOutputCP(65001);
-    WindowsManager::SetWindowSize(100, 30);
-    WindowsManager::SetScreenBufferSize(100, 30);
+    setlocale(LC_ALL, "en_US.UTF-8");
+    WindowsManager::SetWindowSize(110, 30);
+    WindowsManager::SetScreenBufferSize(110, 30);
     WindowsManager::M_SetConsoleTitle(L"Hunting Snake");
     WindowsManager::DisableResizeWindow();
     WindowsManager::ShowCur(0);
@@ -268,7 +315,8 @@ void StartGame() {
         DrawBoard(0, 0, WIDTH_CONSOLE, HEIGH_CONSOLE, 1, i); // Draw game
     }
     DrawBoard(0, 0, WIDTH_CONSOLE, HEIGH_CONSOLE, 5); // Draw game
-    
+    ClearMessage(WIDTH_CONSOLE + 5, 2, 5);
+    DrawMessage(STR_PLAY, WIDTH_CONSOLE + 5, 2, 5, 15, 12);
     STATE = 1;//Start running Thread
 }
 //Function exit game
@@ -287,8 +335,6 @@ void Eat() {
     if (FOOD_INDEX == MAX_SIZE_FOOD - 1)
     {
         GenerateGateAndSpawn();
-        //DrawGate();
-        //DrawSpawn();
         check_eat_done = true;
     }
     else {
@@ -298,8 +344,9 @@ void Eat() {
 }
 //Function to process the dead of snake
 void ProcessDead() {
-    for (int i = 2; i < 5; ++i) {
-        DrawBoard(0, 0, WIDTH_CONSOLE, HEIGH_CONSOLE, 1, i); // Draw game
+    for (int i = 1; i < 5; ++i) {
+        DrawBoard(0, 0, WIDTH_CONSOLE, HEIGH_CONSOLE, 0, i); // Draw game
+        Sleep(50);
     }
     STATE = 0;
     check_eat_done = false;
@@ -361,7 +408,7 @@ void Collisions() {
     if (snake[SIZE_SNAKE - 1].x == food[FOOD_INDEX].x && snake[SIZE_SNAKE - 1].y == food[FOOD_INDEX].y) {
         if (check_eat_done == false) {
             Eat();
-            DrawPlayingProcess(WIDTH_CONSOLE+2,0,4,10);
+            DrawPlayingProcess(2,HEIGH_CONSOLE+2,5,10);
         }
         return;
     }
@@ -370,7 +417,6 @@ void Collisions() {
         return;
     }
 
-
     if (snake[0].x == spawn.x && snake[0].y == spawn.y) {
         FOOD_INDEX = 0;
         if (SPEED == MAX_SPEED) {
@@ -378,20 +424,19 @@ void Collisions() {
             SPEED = 1;
             SIZE_SNAKE = 6;
             GenerateFood();
-
         }
         else SPEED++;
         GenerateFood();
         check_eat_done = false;
         EraseGate();
         EraseSpawn();
-        EeaseProcessbar(WIDTH_CONSOLE + 2, 0);
+        EeaseProcessbar(2, HEIGH_CONSOLE+2);
         return;
     }
     if (check_eat_done == true) {
         for (int i = 0; i < 7; i++) {
             if (snake[SIZE_SNAKE - 1].x == gateArr[i].x && snake[SIZE_SNAKE - 1].y == gateArr[i].y) {
-                WindowsManager::GoTo(0, HEIGH_CONSOLE + 1);
+                WindowsManager::GoTo(2, HEIGH_CONSOLE + 1);
                 cout << "You have touched gate";
                 ProcessDead();
                 return;
@@ -491,7 +536,7 @@ void Load(string path) {
     //WindowsManager::GoTo(0, HEIGH_CONSOLE + 2);
     namePlayer = path;
     string pathFile = path + ".txt";
-    EraseSnakeAndFood();
+    
     ifstream load_file(pathFile);
     load_file >> CHAR_LOCK;
     load_file >> MOVING;
@@ -525,9 +570,8 @@ void Load(string path) {
     }
     load_file.close();
     system("cls");
-    
+    EraseSnakeAndFood();
     DrawBoard(0, 0, WIDTH_CONSOLE, HEIGH_CONSOLE); // Draw game
-    
     DrawSnakeAndFood();
     DrawGate();
     DrawSpawn();
@@ -544,16 +588,21 @@ void RunGame() {
         temp = toupper(_getch());
         if (STATE == 1) {
             if (temp == 'P') {
+                ClearMessage(WIDTH_CONSOLE + 5, 2, 5);
+                DrawMessage(STR_PAUSE, WIDTH_CONSOLE+5, 2, 5,15, 12);
                 PauseGame(handle_t1);
             }
             else if (temp == 'L') {
+                ClearMessage(WIDTH_CONSOLE + 5, 2, 5);
+                DrawMessage(STR_SAVE, WIDTH_CONSOLE + 5, 2, 5, 15, 12);
                 PauseGame(handle_t1);
-
                 Save();
             }
             else if (temp == 'T') {
                 PauseGame(handle_t1);
-                Load("save.txt");
+                Load(namePlayer);
+                ClearMessage(WIDTH_CONSOLE + 5, 2, 5);
+                DrawMessage(STR_LOAD, WIDTH_CONSOLE + 5, 2, 5, 15, 12);
             }
             else if (temp == 27) {
                 // ExitGame(handle_t1);
@@ -568,8 +617,8 @@ void RunGame() {
 
             }
             else {
-
                 ResumeThread(handle_t1);
+                ClearMessage(WIDTH_CONSOLE + 5, 2, 5);
                 if ((temp != CHAR_LOCK) && (temp == 'D' || temp == 'A' || temp == 'W' || temp == 'S'))
                 {
                     if (temp == 'D') CHAR_LOCK = 'A';
@@ -652,8 +701,8 @@ void ChooseFileToLoad() {
             break;
         case 13:
             ResetData();
-            Load(listFileName[choice]);
-            //StartGame();
+            namePlayer = listFileName[choice];
+            Load(namePlayer);
             RunGame();
             return;
             break;
@@ -694,7 +743,7 @@ void MainMenu() {
 
 
     int choice = 0;
-    vector<string> choices = { "New Game", "Load Game", "High Score" };
+    vector<string> choices = { "New Game", "Load Game"};
 
 
 
