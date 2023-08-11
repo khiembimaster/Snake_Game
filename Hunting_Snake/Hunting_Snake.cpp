@@ -18,7 +18,7 @@ const char GATE_PATTERN = '#';
 const char FOOD_PATTERN = 'O';
 const char SPAWN_PATTERN = '$';
 char BODY_PATTERN[] = "2112731721127284";
-POINT snake[20];// snake
+POINT snake[100];// snake
 POINT food[4];  // food
 POINT gate;     // gate
 POINT spawn;    // spwan location
@@ -344,14 +344,14 @@ void Eat() {
 }
 //Function to process the dead of snake
 void ProcessDead() {
+    ClearMessage(WIDTH_CONSOLE + 5, 2, 5);
+    DrawMessage(STR_DEAD, WIDTH_CONSOLE + 5, 2, 5, 15, 12);
     for (int i = 1; i < 5; ++i) {
         DrawBoard(0, 0, WIDTH_CONSOLE, HEIGH_CONSOLE, 0, i); // Draw game
         Sleep(50);
     }
     STATE = 0;
     check_eat_done = false;
-    WindowsManager::GoTo(0, HEIGH_CONSOLE + 2);
-    cout << "Dead, type y to continue or anykey to exit";
 }
 
 // Movements==================================================================================//
@@ -436,7 +436,7 @@ void Collisions() {
     if (check_eat_done == true) {
         for (int i = 0; i < 7; i++) {
             if (snake[SIZE_SNAKE - 1].x == gateArr[i].x && snake[SIZE_SNAKE - 1].y == gateArr[i].y) {
-                WindowsManager::GoTo(2, HEIGH_CONSOLE + 1);
+                WindowsManager::GoTo(WIDTH_CONSOLE + 5, HEIGH_CONSOLE/2);
                 cout << "You have touched gate";
                 ProcessDead();
                 return;
@@ -445,7 +445,7 @@ void Collisions() {
     }
     for (int i = 0; i < SIZE_SNAKE - 1; ++i) {
         if (snake[SIZE_SNAKE - 1].x == snake[i].x && snake[SIZE_SNAKE - 1].y == snake[i].y) {
-            WindowsManager::GoTo(0, HEIGH_CONSOLE + 1);
+            WindowsManager::GoTo(WIDTH_CONSOLE + 5, HEIGH_CONSOLE / 2);
             cout << "You have touched your self!";
             ProcessDead();
             return;
