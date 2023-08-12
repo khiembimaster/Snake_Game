@@ -594,13 +594,6 @@ void RunGame() {
     while (1) {
         temp = toupper(_getch());
         if (STATE == 1) {
-            if (eating == true) {
-                if (check_pause == false) {
-                    PauseGame(handle_t1);
-                }
-                DrawPlayingProcess(2, HEIGH_CONSOLE + 2, 5, 10);
-                eating = false;
-            }
             if ((!check_pause) && temp == 'P') {
                 PauseGame(handle_t1);
                 ClearMessage(WIDTH_CONSOLE + 5, 2, 5);
@@ -633,6 +626,13 @@ void RunGame() {
                 return;
             }
             else {
+                if (eating == true) {
+                    if (check_pause == false) {
+                        PauseGame(handle_t1);
+                    }
+                    DrawPlayingProcess(2, HEIGH_CONSOLE + 2, 5, 10);
+                    eating = false;
+                }
                 if (check_pause == true) {
                     ClearMessage(WIDTH_CONSOLE + 5, 2, 5);
                     DrawMessage(STR_PLAY, WIDTH_CONSOLE + 5, 2, 5, 15, 12);
