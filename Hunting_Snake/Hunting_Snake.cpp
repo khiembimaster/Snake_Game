@@ -14,7 +14,7 @@ using namespace std;
 #define MAX_SIZE_FOOD 4
 #define MAX_SPEED 10
 //Global variables
-const char GATE_PATTERN = '#';
+const wchar_t GATE_PATTERN = L'▓';
 const char FOOD_PATTERN = 'O';
 const char SPAWN_PATTERN = '$';
 char BODY_PATTERN[] = "2112731721127284";
@@ -31,9 +31,11 @@ int SIZE_SNAKE; // size of snake, initially maybe 6 units and maximum size maybe
 int STATE; // State of snake: dead or alive
 int EXIT_GAME = 0;
 bool check_eat_done = false;
+bool eating = false;
 POINT CURSOR;
 POINT gateArr[7];
 bool check_pause = false;
+bool checkGate = false;
 string namePlayer = "";
 //============================================================
 vector<string> getNameFile();
@@ -62,10 +64,10 @@ void EraseSnakeAndFood() {
 void DrawGate() {
     if (check_eat_done == true) {
         WindowsManager::GoTo(gate.x, gate.y);
-        cout << ' ';
+        wcout << L'░';
         for (int i = 0; i < 7; i++) {
             WindowsManager::GoTo(gateArr[i].x, gateArr[i].y);
-            cout << GATE_PATTERN;
+            wcout << GATE_PATTERN;
         }
     }
 }
@@ -301,11 +303,11 @@ void ResetData() {
 void StartGame() {
     system("cls");
     // Intialize original data
-    DrawBoard(0, 0, WIDTH_CONSOLE, HEIGH_CONSOLE,20); // Draw game
+    DrawBoard(0, 0, WIDTH_CONSOLE, HEIGH_CONSOLE,10); // Draw game
     for (int i = 2; i < 4; ++i) {
         DrawBoard(0, 0, WIDTH_CONSOLE, HEIGH_CONSOLE, 1, i); // Draw game
     }
-    DrawBoard(0, 0, WIDTH_CONSOLE, HEIGH_CONSOLE, 5); // Draw game
+    //DrawBoard(0, 0, WIDTH_CONSOLE, HEIGH_CONSOLE, 5); // Draw game
     ClearMessage(WIDTH_CONSOLE + 5, 2, 5);
     DrawMessage(STR_PLAY, WIDTH_CONSOLE + 5, 2, 5, 15, 12);
     STATE = 1;//Start running Thread
@@ -407,29 +409,34 @@ void MoveUp() {
 void Collisions() {
     if (snake[SIZE_SNAKE - 1].x == food[FOOD_INDEX].x && snake[SIZE_SNAKE - 1].y == food[FOOD_INDEX].y) {
         if (check_eat_done == false) {
+            eating = true;
             Eat();
-            DrawPlayingProcess(2,HEIGH_CONSOLE+2,5,10);
         }
         return;
     }
     if (snake[SIZE_SNAKE - 1].x == gate.x && snake[SIZE_SNAKE - 1].y == gate.y) {
         snake[SIZE_SNAKE - 1] = spawn;
+        checkGate = true;
         return;
     }
 
-    if (snake[0].x == spawn.x && snake[0].y == spawn.y) {
-        FOOD_INDEX = 0;
-        if (SPEED == MAX_SPEED) {
-            ResetData();
-            SPEED = 1;
-            SIZE_SNAKE = 6;
+    if (checkGate == true) {
+        if (snake[0].x == spawn.x && snake[0].y == spawn.y) {
+            FOOD_INDEX = 0;
+            if (SPEED == MAX_SPEED) {
+                ResetData();
+                SPEED = 1;
+                SIZE_SNAKE = 6;
+            }
+            else SPEED++;
+            GenerateFood();
+            check_eat_done = false;
+            EraseGate();
+            EraseSpawn();
+            EeaseProcessbar(2, HEIGH_CONSOLE + 2);
+            checkGate = false;
+            return;
         }
-        else SPEED++;
-        GenerateFood();
-        check_eat_done = false;
-        EraseGate();
-        EraseSpawn();
-        EeaseProcessbar(2, HEIGH_CONSOLE+2);
         return;
     }
     if (check_eat_done == true) {
@@ -508,6 +515,7 @@ void Save() {
     save_file << FOOD_INDEX << " ";
     save_file << SIZE_SNAKE << " ";
     save_file << STATE << " ";
+    save_file << checkGate << " ";
     save_file << check_eat_done << " ";
     for (int i = 0; i < SIZE_SNAKE; ++i)
     {
@@ -542,6 +550,7 @@ void Load(string path) {
     load_file >> FOOD_INDEX;
     load_file >> SIZE_SNAKE;
     load_file >> STATE;
+    load_file >> checkGate;
     load_file >> check_eat_done;
     for (int i = 0; i < SIZE_SNAKE; ++i)
     {
@@ -585,6 +594,13 @@ void RunGame() {
     while (1) {
         temp = toupper(_getch());
         if (STATE == 1) {
+            if (eating == true) {
+                if (check_pause == false) {
+                    PauseGame(handle_t1);
+                }
+                DrawPlayingProcess(2, HEIGH_CONSOLE + 2, 5, 10);
+                eating = false;
+            }
             if ((!check_pause) && temp == 'P') {
                 PauseGame(handle_t1);
                 ClearMessage(WIDTH_CONSOLE + 5, 2, 5);
@@ -614,9 +630,7 @@ void RunGame() {
                     ResumeThread(handle_t1);
                 }
                 t1.join();
-
                 return;
-
             }
             else {
                 if (check_pause == true) {
@@ -656,7 +670,6 @@ void RunGame() {
                     }
                     MOVING = temp;
                 }
-
             }
         }
         else {
